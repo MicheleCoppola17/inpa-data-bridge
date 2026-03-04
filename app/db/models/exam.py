@@ -31,3 +31,5 @@ class Exam(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     is_expired: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    sede: Mapped[str | None] = mapped_column(Text, nullable=True)
+    short_title: Mapped[str] = mapped_column(Text, nullable=False)

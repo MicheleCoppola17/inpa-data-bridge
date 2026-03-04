@@ -3,6 +3,7 @@ from apscheduler.triggers.cron import CronTrigger
 
 from app.core.config import get_settings
 from app.scheduler.jobs import run_sync_job
+from app.services.sync_runtime import sync_runtime
 
 
 class SchedulerRunner:
@@ -25,9 +26,11 @@ class SchedulerRunner:
         )
         self._scheduler.start()
         self._started = True
+        sync_runtime.set_scheduler_started(True)
 
     def stop(self) -> None:
         if not self._started:
             return
         self._scheduler.shutdown(wait=False)
         self._started = False
+        sync_runtime.set_scheduler_started(False)

@@ -30,11 +30,28 @@ Backend service that ingests INPA public exam data, normalizes it, stores it in 
    uvicorn app.main:app --reload
    ```
 
-## Health endpoint
+## Public endpoints
 - `GET /api/v1/health`
+- `GET /api/v1/exams`
+- `GET /api/v1/exams/{id}`
+
+Exam payloads include `short_title` and `sede` for cleaner iOS presentation.
+
+### `/api/v1/exams` query params
+- `page` (default `0`)
+- `size` (default `20`, max `100`)
+- `is_expired` (`true|false`)
+- `updated_after` (ISO datetime)
+- `q` (search over `titolo` and `codice`)
+- `sort` (`-data_pubblicazione`, `data_pubblicazione`, `-updated_at`, `updated_at`, `-data_scadenza`, `data_scadenza`)
+
+## Internal sync endpoints
+- `GET /api/v1/internal/sync/status`
+- `POST /api/v1/internal/sync/run`
+
+## INPA source endpoint
+`POST https://portale.inpa.gov.it/concorsi-smart/api/concorso-public-area/search-better?page={page}&size={size}`
 
 ## Notes
-- INPA source endpoint:
-  - `POST https://portale.inpa.gov.it/concorsi-smart/api/concorso-public-area/search-better?page={page}&size={size}`
-- Scheduler is enabled via `SYNC_ENABLED=true` and runs with `SYNC_CRON`.
-# inpa-data-bridge
+- Sync uses content hashing for new vs updated detection.
+- Scheduler is controlled via `SYNC_ENABLED` and `SYNC_CRON`.

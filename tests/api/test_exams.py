@@ -1,0 +1,100 @@
+from datetime import UTC, datetime
+from types import SimpleNamespace
+
+from fastapi.testclient import TestClient
+
+from app.api.deps import get_session
+from app.core.config import get_settings
+from app.main import create_app
+
+
+class FakeScalarResult:
+    def __init__(self, items):
+        self._items = items
+
+    def all(self):
+        return self._items
+
+
+class FakeSession:
+    def __init__(self, exam):
+        self._exam = exam
+
+    async def scalars(self, _query):
+        return FakeScalarResult([self._exam])
+
+    async def scalar(self, _query):
+        return 1
+
+    async def get(self, _model, exam_id):
+        if exam_id == self._exam.id:
+            return self._exam
+        return None
+
+
+exam_fixture = SimpleNamespace(
+    id="abc123",
+    codice="UF6Y8Q_3_2025",
+    titolo="Concorso test",
+    descrizione="Descrizione",
+    figura_ricercata="Istruttore",
+    data_pubblicazione=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
+    data_scadenza=datetime(2025, 9, 4, 10, 0, tzinfo=UTC),
+    tipo_procedura="ESAMI",
+    num_posti=2,
+    salary_min=None,
+    salary_max=None,
+    sede="Roma",
+    short_title="Istruttore (2), Roma",
+    content_hash="a" * 64,
+    first_seen_at=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
+    last_seen_at=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
+    updated_at=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
+    is_expired=False,
+)
+
+
+async def override_session():
+    yield FakeSession(exam_fixture)
+
+
+def test_list_exams(monkeypatch):
+    monkeypatch.setenv("SYNC_ENABLED", "false")
+    get_settings.cache_clear()
+    app = create_app()
+    app.dependency_overrides[get_session] = override_session
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/exams")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 1
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["short_title"] == "Istruttore (2), Roma"
+
+
+def test_get_exam(monkeypatch):
+    monkeypatch.setenv("SYNC_ENABLED", "false")
+    get_settings.cache_clear()
+    app = create_app()
+    app.dependency_overrides[get_session] = override_session
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/exams/abc123")
+
+    assert response.status_code == 200
+    assert response.json()["id"] == "abc123"
+    assert response.json()["short_title"] == "Istruttore (2), Roma"
+
+
+def test_get_exam_not_found(monkeypatch):
+    monkeypatch.setenv("SYNC_ENABLED", "false")
+    get_settings.cache_clear()
+    app = create_app()
+    app.dependency_overrides[get_session] = override_session
+
+    with TestClient(app) as client:
+        response = client.get("/api/v1/exams/missing")
+
+    assert response.status_code == 404

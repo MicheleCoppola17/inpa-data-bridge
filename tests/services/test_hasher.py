@@ -11,12 +11,14 @@ def make_exam(title: str) -> NormalizedExam:
         titolo=title,
         descrizione="Desc",
         figura_ricercata="Role",
+        sede="Rome",
         data_pubblicazione=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
         data_scadenza=datetime(2025, 9, 4, 10, 0, tzinfo=UTC),
         tipo_procedura="ESAMI",
         num_posti=2,
         salary_min=None,
         salary_max=None,
+        short_title="Role (2), Rome",
     )
 
 
@@ -28,4 +30,10 @@ def test_hash_exam_is_deterministic():
 def test_hash_exam_changes_when_content_changes():
     exam_a = make_exam("Title A")
     exam_b = make_exam("Title B")
+    assert hash_exam(exam_a) != hash_exam(exam_b)
+
+
+def test_hash_exam_changes_when_sede_changes():
+    exam_a = make_exam("Title")
+    exam_b = exam_a.model_copy(update={"sede": "Milan"})
     assert hash_exam(exam_a) != hash_exam(exam_b)

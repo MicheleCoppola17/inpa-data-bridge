@@ -22,6 +22,7 @@ def hash_exam(exam: NormalizedExam) -> str:
         "titolo": exam.titolo,
         "descrizione": exam.descrizione,
         "figura_ricercata": exam.figura_ricercata,
+        "sede": exam.sede,
         "data_pubblicazione": _to_serializable(exam.data_pubblicazione),
         "data_scadenza": _to_serializable(exam.data_scadenza),
         "tipo_procedura": exam.tipo_procedura,

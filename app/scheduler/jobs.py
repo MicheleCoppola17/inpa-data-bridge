@@ -1,13 +1,12 @@
 import logging
 
-from app.services.sync_service import SyncService
+from app.services.sync_runtime import sync_runtime
 
 logger = logging.getLogger(__name__)
 
 
 async def run_sync_job() -> None:
-    service = SyncService()
-    result = await service.sync_once()
+    result = await sync_runtime.run_once()
     logger.info(
         "sync finished fetched=%s inserted=%s updated=%s unchanged=%s failed=%s",
         result.fetched,
