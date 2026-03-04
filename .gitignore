@@ -1,0 +1,35 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+.coverage
+htmlcov/
+coverage.xml
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Tooling caches
+.tox/
+.nox/
+
+# IDE / editor files
+.vscode/
+.idea/
+
+# OS noise
+.DS_Store
+Thumbs.db
