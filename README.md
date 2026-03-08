@@ -35,7 +35,7 @@ Backend service that ingests INPA public exam data, normalizes it, stores it in 
 - `GET /api/v1/exams`
 - `GET /api/v1/exams/{id}`
 
-Exam payloads include `short_title` and `sede` for cleaner iOS presentation.
+Exam payloads include `short_title`, `municipality`, `region`, `province`, `url`, `salary_range`, and `selection_criteria` for cleaner iOS presentation.
 
 ### `/api/v1/exams` query params
 - `page` (default `0`)

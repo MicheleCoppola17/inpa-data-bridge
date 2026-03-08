@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -31,5 +32,10 @@ class Exam(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     is_expired: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    sede: Mapped[str | None] = mapped_column(Text, nullable=True)
+    municipality: Mapped[str | None] = mapped_column(Text, nullable=True)
+    region: Mapped[str | None] = mapped_column(Text, nullable=True)
+    province: Mapped[str | None] = mapped_column(Text, nullable=True)
+    salary_range: Mapped[str | None] = mapped_column(Text, nullable=True)
+    selection_criteria: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
+    url: Mapped[str] = mapped_column(Text, nullable=False)
     short_title: Mapped[str] = mapped_column(Text, nullable=False)

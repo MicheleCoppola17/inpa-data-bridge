@@ -41,11 +41,16 @@ exam_fixture = SimpleNamespace(
     data_pubblicazione=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
     data_scadenza=datetime(2025, 9, 4, 10, 0, tzinfo=UTC),
     tipo_procedura="ESAMI",
+    selection_criteria=["Esami"],
     num_posti=2,
     salary_min=None,
     salary_max=None,
-    sede="Roma",
-    short_title="Istruttore (2), Roma",
+    salary_range=None,
+    municipality="Roma",
+    region="Lazio",
+    province="Roma",
+    url="https://www.inpa.gov.it/bandi-e-avvisi/dettaglio-bando-avviso/?concorso_id=abc123",
+    short_title="Istruttore (2 posti), Roma",
     content_hash="a" * 64,
     first_seen_at=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
     last_seen_at=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
@@ -71,7 +76,9 @@ def test_list_exams(monkeypatch):
     payload = response.json()
     assert payload["total"] == 1
     assert len(payload["items"]) == 1
-    assert payload["items"][0]["short_title"] == "Istruttore (2), Roma"
+    assert payload["items"][0]["short_title"] == "Istruttore (2 posti), Roma"
+    assert payload["items"][0]["municipality"] == "Roma"
+    assert payload["items"][0]["url"].endswith("concorso_id=abc123")
 
 
 def test_get_exam(monkeypatch):
@@ -85,7 +92,8 @@ def test_get_exam(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["id"] == "abc123"
-    assert response.json()["short_title"] == "Istruttore (2), Roma"
+    assert response.json()["short_title"] == "Istruttore (2 posti), Roma"
+    assert response.json()["selection_criteria"] == ["Esami"]
 
 
 def test_get_exam_not_found(monkeypatch):

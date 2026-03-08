@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class NormalizedExam(BaseModel):
@@ -13,10 +13,15 @@ class NormalizedExam(BaseModel):
     data_pubblicazione: datetime
     data_scadenza: datetime | None = None
     tipo_procedura: str | None = None
+    selection_criteria: list[str] = Field(default_factory=list)
     num_posti: int | None = None
     salary_min: Decimal | None = None
     salary_max: Decimal | None = None
-    sede: str | None = None
+    salary_range: str | None = None
+    municipality: str | None = None
+    region: str | None = None
+    province: str | None = None
+    url: str
     short_title: str
 
 
@@ -31,10 +36,15 @@ class ExamRead(BaseModel):
     data_pubblicazione: datetime
     data_scadenza: datetime | None = None
     tipo_procedura: str | None = None
+    selection_criteria: list[str] = Field(default_factory=list)
     num_posti: int | None = None
     salary_min: Decimal | None = None
     salary_max: Decimal | None = None
-    sede: str | None = None
+    salary_range: str | None = None
+    municipality: str | None = None
+    region: str | None = None
+    province: str | None = None
+    url: str
     short_title: str
     content_hash: str
     first_seen_at: datetime
