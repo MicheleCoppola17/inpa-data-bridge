@@ -1,7 +1,7 @@
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import case, select
+from sqlalchemy import case, delete, select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.core.config import get_settings
@@ -21,6 +21,27 @@ class SyncService:
         self._client = InpaClient()
 
     async def sync_once(self) -> SyncResult:
+        result = await self._run_sync()
+        # After sync, cleanup old expired exams
+        try:
+            deleted_count = await self.delete_old_expired_exams()
+            logger.info("cleanup finished deleted=%s", deleted_count)
+        except Exception:
+            logger.exception("cleanup failed")
+        return result
+
+    async def delete_old_expired_exams(self) -> int:
+        """Deletes exams that have been expired for more than 14 days."""
+        cutoff_date = datetime.now(UTC) - timedelta(days=14)
+        async with session_scope() as session:
+            stmt = delete(Exam).where(
+                Exam.data_scadenza.is_not(None),
+                Exam.data_scadenza < cutoff_date
+            )
+            result = await session.execute(stmt)
+            return result.rowcount
+
+    async def _run_sync(self) -> SyncResult:
         result = SyncResult()
 
         for page in range(self._settings.sync_max_pages_per_run):

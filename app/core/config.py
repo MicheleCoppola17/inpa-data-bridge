@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     sync_enabled: bool = True
     sync_cron: str = "*/15 * * * *"
-    sync_max_pages_per_run: int = 5
+    sync_max_pages_per_run: int = 50
 
 
 @lru_cache
