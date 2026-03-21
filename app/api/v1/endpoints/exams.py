@@ -18,6 +18,7 @@ async def list_exams(
     is_expired: bool | None = None,
     updated_after: datetime | None = None,
     q: str | None = None,
+    settore: str | None = None,
     sort: str = Query("-data_pubblicazione"),
     session: AsyncSession = Depends(get_session),
 ) -> ExamListResponse:
@@ -26,6 +27,8 @@ async def list_exams(
         filters.append(Exam.is_expired == is_expired)
     if updated_after is not None:
         filters.append(Exam.updated_at >= updated_after)
+    if settore:
+        filters.append(Exam.settore == settore)
     if q:
         search = f"%{q}%"
         filters.append(or_(Exam.titolo.ilike(search), Exam.codice.ilike(search)))
