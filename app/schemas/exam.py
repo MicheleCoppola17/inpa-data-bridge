@@ -10,6 +10,7 @@ class NormalizedExam(BaseModel):
     titolo: str
     descrizione: str
     figura_ricercata: str | None = None
+    settore: str
     data_pubblicazione: datetime
     data_scadenza: datetime | None = None
     tipo_procedura: str | None = None
@@ -34,6 +35,7 @@ class ExamRead(BaseModel):
     titolo: str
     descrizione: str
     figura_ricercata: str | None = None
+    settore: str
     data_pubblicazione: datetime
     data_scadenza: datetime | None = None
     tipo_procedura: str | None = None

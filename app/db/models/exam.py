@@ -15,6 +15,7 @@ class Exam(Base):
     titolo: Mapped[str] = mapped_column(Text, nullable=False)
     descrizione: Mapped[str] = mapped_column(Text, nullable=False)
     figura_ricercata: Mapped[str | None] = mapped_column(Text, nullable=True)
+    settore: Mapped[str] = mapped_column(Text, nullable=False, server_default="Altro")
     data_pubblicazione: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     data_scadenza: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     tipo_procedura: Mapped[str | None] = mapped_column(Text, nullable=True)

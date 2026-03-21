@@ -9,6 +9,110 @@ from bs4 import BeautifulSoup
 from app.schemas.exam import NormalizedExam
 
 _WHITESPACE_RE = re.compile(r"\s+")
+
+# ---------------------------------------------------------------------------
+# Settore classification
+# ---------------------------------------------------------------------------
+
+_SETTORE_KEYWORDS: list[tuple[str, list[str]]] = [
+    (
+        "Amministrativo e Contabile",
+        [
+            "amministrativo", "amministrazione", "procedimenti amministrativi",
+            "contabile", "contabilità", "funzionario", "istruttore", "tributi",
+            "ragioneria", "segreteria", "gestione", "ufficio", "appalti",
+            "procedimenti", "supporto", "oiv",
+        ],
+    ),
+    (
+        "Tecnico e Progettazione",
+        [
+            "tecnico", "ingegnere", "architetto", "geometra", "tecnologo",
+            "progettazione", "urbanistica", "perito", "edilizia", "trasporti",
+            "infrastrutture", "paesaggio", "monitoraggio",
+        ],
+    ),
+    (
+        "Ambiente e Territorio",
+        [
+            "agricoltura", "foreste", "cava", "bonifiche", "rifiuti",
+            "rinnovabili", "idrico", "alluvioni", "ambientale", "ambiente",
+            "territorio",
+        ],
+    ),
+    (
+        "Sanità e Assistenza",
+        [
+            "medico", "infermiere", "oss", "sanitario", "sanitarie", "psicologo",
+            "veterinario", "biologo", "fisioterapista", "farmacista", "clinica",
+        ],
+    ),
+    (
+        "Istruzione e Ricerca",
+        [
+            "docente", "insegnante", "ricercatore", "borsista", "scuola",
+            "università", "educatore", "nido", "pedagogico", "accademico",
+        ],
+    ),
+    (
+        "Polizia e Vigilanza",
+        [
+            "polizia", "locale", "municipale", "vigilanza", "agente",
+            "comandante", "maresciallo", "sicurezza",
+        ],
+    ),
+    (
+        "Sociale",
+        [
+            "assistente sociale", "mediatore", "animatore", "sociologo",
+            "welfare",
+        ],
+    ),
+    (
+        "IT e Comunicazione",
+        [
+            "informatico", "digitale", "it", "software", "web", "social media",
+            "comunicazione", "informazione", "sistemi",
+        ],
+    ),
+    (
+        "Operativo e Manutentivo",
+        [
+            "operaio", "autista", "cuoco", "giardiniere", "manutentore",
+            "conducente", "ormeggiatore", "operatore",
+        ],
+    ),
+]
+
+
+def _matches_keywords(text: str, keywords: list[str]) -> bool:
+    """Return True if *text* contains any of the keywords (case-insensitive)."""
+    text_lower = text.lower()
+    return any(kw in text_lower for kw in keywords)
+
+
+def classify_settore(
+    figura_ricercata: str | None,
+    settori: list[str] | None,
+) -> str:
+    """Return the category that best describes the exam.
+
+    Priority:
+    1. Match keywords against *figura_ricercata*.
+    2. Fall back to *settori* joined as a single string.
+    3. Return 'Altro' if no match is found.
+    """
+    for category, keywords in _SETTORE_KEYWORDS:
+        if figura_ricercata and _matches_keywords(figura_ricercata, keywords):
+            return category
+
+    if settori:
+        combined = " ".join(settori)
+        for category, keywords in _SETTORE_KEYWORDS:
+            if _matches_keywords(combined, keywords):
+                return category
+
+    return "Altro"
 _SPLIT_NON_ALNUM_RE = re.compile(r"[^A-Z0-9]+")
 _SELECTION_CRITERIA_MAP = {
     "COLLOQUIO": "Colloquio",
@@ -131,6 +235,7 @@ def normalize_exam(raw_exam: dict[str, Any]) -> NormalizedExam:
     region = sedi[0] if sedi and len(sedi) > 0 else None
     province = sedi[1] if sedi and len(sedi) > 1 else None
     figura_ricercata = raw_exam.get("figuraRicercata")
+    settori: list[str] | None = raw_exam.get("settori") or None
     num_posti = raw_exam.get("numPosti")
     tipo_procedura = raw_exam.get("tipoProcedura")
     salary_min = Decimal(str(raw_exam["salaryMin"])) if raw_exam.get("salaryMin") is not None else None
@@ -146,6 +251,7 @@ def normalize_exam(raw_exam: dict[str, Any]) -> NormalizedExam:
         region=region,
         province=province,
         figura_ricercata=figura_ricercata,
+        settore=classify_settore(figura_ricercata, settori),
         num_posti=num_posti,
         data_pubblicazione=parse_iso_datetime(raw_exam.get("dataPubblicazione")),
         data_scadenza=parse_iso_datetime(raw_exam.get("dataScadenza")),

@@ -38,6 +38,7 @@ exam_fixture = SimpleNamespace(
     titolo="Concorso test",
     descrizione="Descrizione",
     figura_ricercata="Istruttore",
+    settore="Amministrativo e Contabile",
     data_pubblicazione=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
     data_scadenza=datetime(2025, 9, 4, 10, 0, tzinfo=UTC),
     tipo_procedura="ESAMI",

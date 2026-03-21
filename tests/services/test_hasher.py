@@ -11,6 +11,7 @@ def make_exam(title: str) -> NormalizedExam:
         titolo=title,
         descrizione="Desc",
         figura_ricercata="Role",
+        settore="Tecnico e Progettazione",
         municipality="Rome",
         region="Lazio",
         province="Roma",
