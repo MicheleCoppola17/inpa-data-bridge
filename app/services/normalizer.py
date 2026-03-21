@@ -20,6 +20,10 @@ _SELECTION_CRITERIA_MAP = {
 _EXAM_DETAIL_BASE_URL = (
     "https://www.inpa.gov.it/bandi-e-avvisi/dettaglio-bando-avviso/?concorso_id="
 )
+_PREAMBLES_RE = re.compile(
+    r"^(Avviso di procedura selettiva pubblica|Avviso di selezione|Concorso pubblico|Procedura comparativa|Selezione pubblica|Bando di concorso|Bando|Avviso|Selezione|Procedura|E' indetta una procedura comparativa|E' indetto un concorso pubblico|Bando CNR N\.)[^a-zA-Z]*",
+    re.IGNORECASE,
+)
 
 
 def clean_html_to_text(value: str | None) -> str:
@@ -55,6 +59,33 @@ def build_short_title(
     municipality_clean = (municipality or "").strip()
     luogo = f", {municipality_clean}" if municipality_clean else ""
     return f"{figura}{posti}{luogo}"
+
+
+def build_short_description(
+    descrizione: str | None,
+    descrizione_breve: str | None,
+) -> str:
+    # 1. Clean HTML
+    text = clean_html_to_text(descrizione_breve or descrizione)
+    if not text:
+        return ""
+
+    # 2. De-noise: Strip legal preambles
+    text = _PREAMBLES_RE.sub("", text).strip()
+
+    # 3. Format: Capitalize and end with period
+    if text:
+        text = text[0].upper() + text[1:]
+        if not text.endswith("."):
+            text += "."
+
+    # 4. Truncate to 160 characters
+    if len(text) > 160:
+        text = text[:157].strip() + "..."
+        if not text.endswith("."):
+            text += "."
+
+    return text
 
 
 def format_eur_amount(amount: Decimal) -> str:
@@ -125,4 +156,7 @@ def normalize_exam(raw_exam: dict[str, Any]) -> NormalizedExam:
         salary_range=build_salary_range(salary_min, salary_max),
         url=f"{_EXAM_DETAIL_BASE_URL}{exam_id}",
         short_title=build_short_title(figura_ricercata, num_posti, municipality),
+        short_description=build_short_description(
+            raw_exam.get("descrizione"), raw_exam.get("descrizioneBreve")
+        ),
     )

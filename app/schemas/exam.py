@@ -23,6 +23,7 @@ class NormalizedExam(BaseModel):
     province: str | None = None
     url: str
     short_title: str
+    short_description: str
 
 
 class ExamRead(BaseModel):
@@ -46,6 +47,7 @@ class ExamRead(BaseModel):
     province: str | None = None
     url: str
     short_title: str
+    short_description: str
     content_hash: str
     first_seen_at: datetime
     last_seen_at: datetime

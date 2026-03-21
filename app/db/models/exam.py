@@ -39,3 +39,4 @@ class Exam(Base):
     selection_criteria: Mapped[list[str]] = mapped_column(JSONB, nullable=False, default=list)
     url: Mapped[str] = mapped_column(Text, nullable=False)
     short_title: Mapped[str] = mapped_column(Text, nullable=False)
+    short_description: Mapped[str] = mapped_column(Text, nullable=False)

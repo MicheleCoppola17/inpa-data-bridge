@@ -51,6 +51,7 @@ exam_fixture = SimpleNamespace(
     province="Roma",
     url="https://www.inpa.gov.it/bandi-e-avvisi/dettaglio-bando-avviso/?concorso_id=abc123",
     short_title="Istruttore (2 posti), Roma",
+    short_description="Descrizione",
     content_hash="a" * 64,
     first_seen_at=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),
     last_seen_at=datetime(2025, 8, 4, 11, 15, tzinfo=UTC),

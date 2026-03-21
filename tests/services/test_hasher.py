@@ -24,8 +24,8 @@ def make_exam(title: str) -> NormalizedExam:
         salary_range=None,
         url="https://www.inpa.gov.it/bandi-e-avvisi/dettaglio-bando-avviso/?concorso_id=abc123",
         short_title="Role (2 posti), Rome",
-    )
-
+        short_description="Desc",
+        )
 
 def test_hash_exam_is_deterministic():
     exam = make_exam("Title")

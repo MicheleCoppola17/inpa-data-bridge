@@ -54,6 +54,6 @@ Exam payloads include `short_title`, `municipality`, `region`, `province`, `url`
 
 ## Notes
 - Sync uses content hashing for new vs updated detection.
-- **Automatic Cleanup**: Exams that have been expired for more than 14 days are automatically deleted at the end of each sync run.
+- Automatic Cleanup: Exams that have been expired for more than 14 days are automatically deleted at the end of each sync run.
 - Scheduler is controlled via `SYNC_ENABLED` and `SYNC_CRON`.
 - Default sync handles up to 50 pages (2500 items) per run to balance load.
