@@ -16,19 +16,10 @@ _WHITESPACE_RE = re.compile(r"\s+")
 
 _SETTORE_KEYWORDS: list[tuple[str, list[str]]] = [
     (
-        "Amministrativo e Contabile",
-        [
-            "amministrativo", "amministrazione", "procedimenti amministrativi",
-            "contabile", "contabilità", "funzionario", "istruttore", "tributi",
-            "ragioneria", "segreteria", "gestione", "ufficio", "appalti",
-            "procedimenti", "supporto", "oiv",
-        ],
-    ),
-    (
         "Tecnico e Progettazione",
         [
-            "tecnico", "ingegnere", "architetto", "geometra", "tecnologo",
-            "progettazione", "urbanistica", "perito", "edilizia", "trasporti",
+            "tecnico", "tecniche", "tecnici", "ingegnere", "ingegneri", "architetto", "architetti", "geometra", "geometri", "tecnologo", "tecnologi",
+            "progettazione", "urbanistica", "perito", "periti", "edilizia", "trasporti",
             "infrastrutture", "paesaggio", "monitoraggio",
         ],
     ),
@@ -37,58 +28,79 @@ _SETTORE_KEYWORDS: list[tuple[str, list[str]]] = [
         [
             "agricoltura", "foreste", "cava", "bonifiche", "rifiuti",
             "rinnovabili", "idrico", "alluvioni", "ambientale", "ambiente",
-            "territorio",
+            "territorio", "agronomo",
         ],
     ),
     (
         "Sanità e Assistenza",
         [
-            "medico", "infermiere", "oss", "sanitario", "sanitarie", "psicologo",
-            "veterinario", "biologo", "fisioterapista", "farmacista", "clinica",
+            "medico", "medici", "infermiere", "infermieri", "oss", "aso", "sanitario", "sanitarie", "psicologo", "psicologi",
+            "veterinario", "biologo", "biologi", "fisioterapista", "fisioterapisti", "farmacista", "farmacisti", "clinica",
+            "logopedista", "logopedisti", "ortottista", "ostetrica", "ostetriche", "terapista", "terapisti",
         ],
     ),
     (
         "Istruzione e Ricerca",
         [
-            "docente", "insegnante", "ricercatore", "borsista", "scuola",
-            "università", "educatore", "nido", "pedagogico", "accademico",
+            "docente", "docenti", "insegnante", "insegnanti", "ricercatore", "ricercatori", "ricerca", "borsista", "borsisti", "borsa di studio", "scuola", "scolastico", "scolastica",
+            "università", "educatore", "educatori", "nido", "pedagogico", "pedagogista", "pedagogisti", "accademico",
+            "professore", "professori",
         ],
     ),
     (
         "Polizia e Vigilanza",
         [
-            "polizia", "locale", "municipale", "vigilanza", "agente",
-            "comandante", "maresciallo", "sicurezza",
+            "polizia", "locale", "municipale", "vigilanza", "agente", "agenti",
+            "comandante", "maresciallo", "sicurezza", "vigile", "guardia",
         ],
     ),
     (
         "Sociale",
         [
-            "assistente sociale", "mediatore", "animatore", "sociologo",
+            "assistente sociale", "assistenti sociali", "mediatore", "animatore", "sociologo", "sociologi",
             "welfare",
         ],
     ),
     (
         "IT e Comunicazione",
         [
-            "informatico", "digitale", "it", "software", "web", "social media",
-            "comunicazione", "informazione", "sistemi",
+            "informatico", "informatici", "digitale", "it", "ict", "software", "web", "social media",
+            "comunicazione", "informazione", "sistemi", "designer", "grafico", "dati", "data", "statistico",
         ],
     ),
     (
         "Operativo e Manutentivo",
         [
-            "operaio", "autista", "cuoco", "giardiniere", "manutentore",
-            "conducente", "ormeggiatore", "operatore",
+            "operaio", "operai", "autista", "autisti", "cuoco", "cuochi", "giardiniere", "giardinieri", "manutentore", "manutentori",
+            "conducente", "conducenti", "ormeggiatore", "operatore", "operatori", "muratore", "cantoniere",
+        ],
+    ),
+    (
+        "Amministrativo e Contabile",
+        [
+            "amministrativo", "amministrativi", "amministrative", "amministrazione", "procedimenti amministrativi",
+            "contabile", "contabili", "contabilità", "funzionario", "funzionari", "tributi", "tributario",
+            "ragioneria", "segreteria", "gestione", "ufficio", "appalti",
+            "procedimenti", "supporto", "oiv", "dirigente", "dirigenti", "direttore", "direttori",
+            "istruttore", "istruttori", "collaboratore", "collaboratori", "assistente", "assistenti",
+            "esperto", "esperti", "impiegato", "impiegati", "segretario", "segretari", "commissario", "commissione",
+            "valutazione",
         ],
     ),
 ]
 
 
 def _matches_keywords(text: str, keywords: list[str]) -> bool:
-    """Return True if *text* contains any of the keywords (case-insensitive)."""
+    """Return True if *text* contains any of the keywords (case-insensitive).
+    Uses regex word boundaries for short acronyms to prevent false positives."""
     text_lower = text.lower()
-    return any(kw in text_lower for kw in keywords)
+    for kw in keywords:
+        if kw in ("it", "ict", "oss", "aso", "oiv", "scuola", "dati", "data"):
+            if re.search(r'\b' + re.escape(kw) + r'\b', text_lower):
+                return True
+        elif kw in text_lower:
+            return True
+    return False
 
 
 def classify_settore(
