@@ -27,38 +27,32 @@ class NormalizedExam(BaseModel):
     short_description: str
 
 
-class ExamRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class ExamPublicRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: str
-    codice: str
-    titolo: str
-    descrizione: str
-    figura_ricercata: str | None = None
-    settore: str
-    data_pubblicazione: datetime
-    data_scadenza: datetime | None = None
-    tipo_procedura: str | None = None
+    region: str | None = None
+    province: str | None = None
+    organization: str | None = Field(None, validation_alias="municipality")
+    sector: str = Field(validation_alias="settore")
+    short_title: str
+    short_description: str
+    description: str = Field(validation_alias="descrizione")
+    position: str | None = Field(None, validation_alias="figura_ricercata")
+    vacancies: int | None = Field(None, validation_alias="num_posti")
     selection_criteria: list[str] = Field(default_factory=list)
-    num_posti: int | None = None
+    is_expired: bool
+    published_at: datetime = Field(validation_alias="data_pubblicazione")
+    expires_at: datetime | None = Field(None, validation_alias="data_scadenza")
     salary_min: Decimal | None = None
     salary_max: Decimal | None = None
     salary_range: str | None = None
-    municipality: str | None = None
-    region: str | None = None
-    province: str | None = None
     url: str
-    short_title: str
-    short_description: str
-    content_hash: str
-    first_seen_at: datetime
-    last_seen_at: datetime
     updated_at: datetime
-    is_expired: bool
 
 
-class ExamListResponse(BaseModel):
-    items: list[ExamRead]
+class ExamPublicListResponse(BaseModel):
+    items: list[ExamPublicRead]
     page: int
     size: int
     total: int

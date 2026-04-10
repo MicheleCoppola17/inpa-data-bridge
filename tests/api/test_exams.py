@@ -78,30 +78,30 @@ def test_list_exams(monkeypatch):
     payload = response.json()
     assert payload["total"] == 1
     assert len(payload["items"]) == 1
-    assert payload["items"][0]["short_title"] == "Istruttore (2 posti), Roma"
-    assert payload["items"][0]["municipality"] == "Roma"
-    assert payload["items"][0]["url"].endswith("concorso_id=abc123")
+    item = payload["items"][0]
+    assert item["short_title"] == "Istruttore (2 posti), Roma"
+    assert item["organization"] == "Roma"
+    assert item["sector"] == "Amministrativo e Contabile"
+    assert item["url"].endswith("concorso_id=abc123")
+    assert "published_at" in item
+    assert "codice" not in item
+    assert "titolo" not in item
 
 
-def test_list_exams_filter_settore(monkeypatch):
+def test_list_exams_filter_sector(monkeypatch):
     monkeypatch.setenv("SYNC_ENABLED", "false")
     get_settings.cache_clear()
     app = create_app()
     app.dependency_overrides[get_session] = override_session
 
     with TestClient(app) as client:
-        # Correct settore
-        response = client.get("/api/v1/exams?settore=Amministrativo e Contabile")
+        # Correct sector
+        response = client.get("/api/v1/exams?sector=Amministrativo e Contabile")
         assert response.status_code == 200
         assert len(response.json()["items"]) == 1
 
-        # Wrong settore
-        # Note: the mock FakeSession always returns the same fixture for any query if it has filters.
-        # However, the endpoint logic will apply the filters to the count_query and query.
-        # But FakeSession.scalar always returns 1.
-        # And FakeSession.scalars always returns [exam_fixture].
-        # So it's not a real DB test, but it tests the router wiring.
-        response = client.get("/api/v1/exams?settore=Wrong")
+        # Wrong sector
+        response = client.get("/api/v1/exams?sector=Wrong")
         assert response.status_code == 200
 
 
