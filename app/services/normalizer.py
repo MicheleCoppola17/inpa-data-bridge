@@ -240,13 +240,43 @@ def simplify_selection_criteria(tipo_procedura: str | None) -> list[str]:
     return criteria
 
 
+def clean_figura_ricercata(text: str | None, max_length: int = 100) -> str | None:
+    if not text:
+        return text
+
+    text = " ".join(text.split())
+
+    alpha_chars = [c for c in text if c.isalpha()]
+    mostly_upper = False
+    if alpha_chars:
+        upper_chars = [c for c in alpha_chars if c.isupper()]
+        mostly_upper = (len(upper_chars) / len(alpha_chars)) > 0.7
+
+    def capitalize_word(match):
+        word = match.group(0)
+        if not mostly_upper and word.isupper() and len(word) > 1:
+            return word
+        return word.capitalize()
+
+    cleaned = re.sub(r"[A-Za-zÀ-ÖØ-öø-ÿ]+", capitalize_word, text)
+
+    if len(cleaned) > max_length:
+        truncated = cleaned[:max_length - 3]
+        last_space = truncated.rfind(" ")
+        if last_space > 0:
+            truncated = truncated[:last_space]
+        cleaned = truncated + "..."
+
+    return cleaned
+
+
 def normalize_exam(raw_exam: dict[str, Any]) -> NormalizedExam:
     enti = raw_exam.get("entiRiferimento")
     municipality = enti[0] if enti and len(enti) > 0 else None
     sedi = raw_exam.get("sedi")
     region = sedi[0] if sedi and len(sedi) > 0 else None
     province = sedi[1] if sedi and len(sedi) > 1 else None
-    figura_ricercata = raw_exam.get("figuraRicercata")
+    figura_ricercata = clean_figura_ricercata(raw_exam.get("figuraRicercata"))
     settori: list[str] | None = raw_exam.get("settori") or None
     num_posti = raw_exam.get("numPosti")
     tipo_procedura = raw_exam.get("tipoProcedura")

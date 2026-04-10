@@ -59,3 +59,30 @@ def test_normalize_exam_maps_location_url_and_simplified_fields():
     assert normalized.url.endswith("concorso_id=abc123")
     assert normalized.selection_criteria == ["Titoli", "Colloquio"]
     assert normalized.salary_range == "€24,000 - €32,000"
+
+def test_clean_figura_ricercata():
+    from app.services.normalizer import clean_figura_ricercata
+    
+    # Title casing
+    assert clean_figura_ricercata("Istruttore amministrativo") == "Istruttore Amministrativo"
+    
+    # Acronym preservation
+    assert clean_figura_ricercata("OSS - Operatore Socio Sanitario") == "OSS - Operatore Socio Sanitario"
+    assert clean_figura_ricercata("CCNL del Comparto") == "CCNL Del Comparto"
+    
+    # All caps fallback
+    assert clean_figura_ricercata("FUNZIONARIO TECNICO") == "Funzionario Tecnico"
+    assert clean_figura_ricercata("ISTRUTTORE DIRETTIVO TECNICO ALTA SPECIALZZAZIONE") == "Istruttore Direttivo Tecnico Alta Specialzzazione"
+    
+    # Mixed with acronyms
+    assert clean_figura_ricercata("Dirigente Medico M.E.U.") == "Dirigente Medico M.E.U."
+    
+    # Extra whitespace
+    assert clean_figura_ricercata("  Operatore   Esperto  ") == "Operatore Esperto"
+    
+    # Long strings truncation
+    long_string = "n. 1 incarico di collaborazione per lo svolgimento di attività di orientamento e supporto personalizzato a favore di studenti e studentesse con bisogni educativi speciali nell’ambito del Progetto NOI (Nuove opportunità inclusive)"
+    cleaned_long = clean_figura_ricercata(long_string)
+    assert len(cleaned_long) <= 100
+    assert cleaned_long.endswith("...")
+    assert "N. 1 Incarico Di Collaborazione" in cleaned_long
