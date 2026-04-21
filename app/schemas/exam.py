@@ -20,8 +20,8 @@ class NormalizedExam(BaseModel):
     salary_max: Decimal | None = None
     salary_range: str | None = None
     municipality: str | None = None
-    region: str | None = None
-    province: str | None = None
+    regions: list[str] = Field(default_factory=list)
+    provinces: list[str] = Field(default_factory=list)
     url: str
     short_title: str
     short_description: str
@@ -31,8 +31,8 @@ class ExamPublicRead(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: str
-    region: str | None = None
-    province: str | None = None
+    regions: list[str] = Field(default_factory=list)
+    provinces: list[str] = Field(default_factory=list)
     organization: str | None = Field(None, validation_alias="municipality")
     sector: str = Field(validation_alias="settore")
     short_title: str

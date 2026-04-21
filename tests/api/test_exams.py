@@ -20,10 +20,30 @@ class FakeSession:
     def __init__(self, exam):
         self._exam = exam
 
-    async def scalars(self, _query):
+    async def scalars(self, query):
+        params = query.compile().params
+        
+        # Check for location filters (JSONB containment)
+        for val in params.values():
+            if isinstance(val, list) and len(val) == 1:
+                search_val = val[0]
+                if search_val not in self._exam.regions and search_val not in self._exam.provinces:
+                    return FakeScalarResult([])
+
         return FakeScalarResult([self._exam])
 
-    async def scalar(self, _query):
+    async def scalar(self, query):
+        params = query.compile().params
+        if "sector_1" in params and params["sector_1"] != self._exam.settore:
+            return 0
+        if "settore_1" in params and params["settore_1"] != self._exam.settore:
+            return 0
+            
+        for val in params.values():
+            if isinstance(val, list) and len(val) == 1:
+                search_val = val[0]
+                if search_val not in self._exam.regions and search_val not in self._exam.provinces:
+                    return 0
         return 1
 
     async def get(self, _model, exam_id):
@@ -48,8 +68,8 @@ exam_fixture = SimpleNamespace(
     salary_max=None,
     salary_range=None,
     municipality="Roma",
-    region="Lazio",
-    province="Roma",
+    regions=["Lazio"],
+    provinces=["Roma"],
     url="https://www.inpa.gov.it/bandi-e-avvisi/dettaglio-bando-avviso/?concorso_id=abc123",
     short_title="Istruttore (2 posti), Roma",
     short_description="Descrizione",
@@ -130,3 +150,31 @@ def test_get_exam_not_found(monkeypatch):
         response = client.get("/api/v1/exams/missing")
 
     assert response.status_code == 404
+
+
+def test_list_exams_filter_location(monkeypatch):
+    monkeypatch.setenv("SYNC_ENABLED", "false")
+    get_settings.cache_clear()
+    app = create_app()
+    app.dependency_overrides[get_session] = override_session
+
+    with TestClient(app) as client:
+        # Filter by region
+        response = client.get("/api/v1/exams?region=Lazio")
+        assert response.status_code == 200
+        assert len(response.json()["items"]) == 1
+
+        # Filter by wrong region
+        response = client.get("/api/v1/exams?region=Umbria")
+        assert response.status_code == 200
+        assert len(response.json()["items"]) == 0
+
+        # Filter by province
+        response = client.get("/api/v1/exams?province=Roma")
+        assert response.status_code == 200
+        assert len(response.json()["items"]) == 1
+
+        # Filter by wrong province
+        response = client.get("/api/v1/exams?province=Milano")
+        assert response.status_code == 200
+        assert len(response.json()["items"]) == 0

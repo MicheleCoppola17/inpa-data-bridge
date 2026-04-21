@@ -1,10 +1,12 @@
 from decimal import Decimal
 
 from app.services.normalizer import (
+    ITALIAN_REGIONS,
     build_salary_range,
     build_short_title,
     clean_html_to_text,
     normalize_exam,
+    parse_sedi,
     simplify_selection_criteria,
 )
 
@@ -34,6 +36,63 @@ def test_simplify_selection_criteria_maps_technical_value():
     assert simplify_selection_criteria(None) == []
 
 
+# ---------------------------------------------------------------------------
+# parse_sedi tests
+# ---------------------------------------------------------------------------
+
+def test_parse_sedi_empty():
+    assert parse_sedi(None) == ([], [])
+    assert parse_sedi([]) == ([], [])
+
+
+def test_parse_sedi_single_region():
+    regions, provinces = parse_sedi(["Lazio"])
+    assert regions == ["Lazio"]
+    assert provinces == []
+
+
+def test_parse_sedi_region_and_province():
+    regions, provinces = parse_sedi(["Lazio", "Roma"])
+    assert regions == ["Lazio"]
+    assert provinces == ["Roma"]
+
+
+def test_parse_sedi_multiple_regions_only():
+    """Case from the bug report — all entries are regions."""
+    regions, provinces = parse_sedi(["Molise", "Abruzzo", "Marche", "Umbria"])
+    assert regions == ["Molise", "Abruzzo", "Marche", "Umbria"]
+    assert provinces == []
+
+
+def test_parse_sedi_many_regions():
+    """13 regions, none are provinces."""
+    sedi = [
+        "Lombardia", "Marche", "Umbria", "Piemonte", "Abruzzo",
+        "Puglia", "Emilia Romagna", "Sicilia", "Liguria", "Veneto",
+        "Lazio", "Toscana", "Campania",
+    ]
+    regions, provinces = parse_sedi(sedi)
+    assert len(regions) == 13
+    assert provinces == []
+    for s in sedi:
+        assert s in regions
+
+
+def test_parse_sedi_mixed_regions_and_provinces():
+    """Mix of regions and non-region locations."""
+    regions, provinces = parse_sedi(["Lazio", "Roma", "Torino"])
+    assert regions == ["Lazio"]
+    assert provinces == ["Roma", "Torino"]
+
+
+def test_italian_regions_set_has_20():
+    assert len(ITALIAN_REGIONS) == 20
+
+
+# ---------------------------------------------------------------------------
+# normalize_exam — integration
+# ---------------------------------------------------------------------------
+
 def test_normalize_exam_maps_location_url_and_simplified_fields():
     raw_exam = {
         "id": "abc123",
@@ -54,11 +113,59 @@ def test_normalize_exam_maps_location_url_and_simplified_fields():
     normalized = normalize_exam(raw_exam)
 
     assert normalized.municipality == "Roma"
-    assert normalized.region == "Lazio"
-    assert normalized.province == "Roma"
+    assert normalized.regions == ["Lazio"]
+    assert normalized.provinces == ["Roma"]
     assert normalized.url.endswith("concorso_id=abc123")
     assert normalized.selection_criteria == ["Titoli", "Colloquio"]
     assert normalized.salary_range == "€24,000 - €32,000"
+
+
+def test_normalize_exam_multi_region():
+    """Multi-region exam should have all regions, no provinces."""
+    raw_exam = {
+        "id": "multi_region",
+        "codice": "CODE",
+        "titolo": "Concorso multi-regione",
+        "descrizione": "<p>Desc</p>",
+        "figuraRicercata": "Docente",
+        "numPosti": 68,
+        "dataPubblicazione": "2026-03-27T11:01:00Z",
+        "dataScadenza": "2026-04-17T10:01:00Z",
+        "tipoProcedura": "TITOLI_ESAMI",
+        "salaryMin": None,
+        "salaryMax": None,
+        "entiRiferimento": ["Ministero dell'Istruzione"],
+        "sedi": ["Molise", "Abruzzo", "Marche", "Umbria"],
+    }
+
+    normalized = normalize_exam(raw_exam)
+
+    assert normalized.regions == ["Molise", "Abruzzo", "Marche", "Umbria"]
+    assert normalized.provinces == []
+
+
+def test_normalize_exam_no_sedi():
+    raw_exam = {
+        "id": "no_sedi",
+        "codice": "CODE",
+        "titolo": "Concorso senza sedi",
+        "descrizione": "<p>Desc</p>",
+        "figuraRicercata": "Funzionario",
+        "numPosti": 1,
+        "dataPubblicazione": "2026-01-01T00:00:00Z",
+        "dataScadenza": None,
+        "tipoProcedura": None,
+        "salaryMin": None,
+        "salaryMax": None,
+        "entiRiferimento": [],
+        "sedi": [],
+    }
+
+    normalized = normalize_exam(raw_exam)
+
+    assert normalized.regions == []
+    assert normalized.provinces == []
+
 
 def test_clean_figura_ricercata():
     from app.services.normalizer import clean_figura_ricercata
@@ -81,7 +188,7 @@ def test_clean_figura_ricercata():
     assert clean_figura_ricercata("  Operatore   Esperto  ") == "Operatore Esperto"
     
     # Long strings truncation
-    long_string = "n. 1 incarico di collaborazione per lo svolgimento di attività di orientamento e supporto personalizzato a favore di studenti e studentesse con bisogni educativi speciali nell’ambito del Progetto NOI (Nuove opportunità inclusive)"
+    long_string = "n. 1 incarico di collaborazione per lo svolgimento di attività di orientamento e supporto personalizzato a favore di studenti e studentesse con bisogni educativi speciali nell'ambito del Progetto NOI (Nuove opportunità inclusive)"
     cleaned_long = clean_figura_ricercata(long_string)
     assert len(cleaned_long) <= 100
     assert cleaned_long.endswith("...")

@@ -11,6 +11,35 @@ from app.schemas.exam import NormalizedExam
 _WHITESPACE_RE = re.compile(r"\s+")
 
 # ---------------------------------------------------------------------------
+# Italian regions lookup (all 20 regions)
+# ---------------------------------------------------------------------------
+
+ITALIAN_REGIONS: set[str] = {
+    "Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia Romagna",
+    "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
+    "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana",
+    "Trentino Alto Adige", "Umbria", "Valle d'Aosta", "Veneto",
+}
+
+
+def parse_sedi(sedi: list[str] | None) -> tuple[list[str], list[str]]:
+    """Classify each sedi entry as region or province.
+
+    Returns (regions, provinces).  Any entry that matches one of Italy's
+    20 regions is classified as a region; everything else is a province.
+    """
+    if not sedi:
+        return [], []
+    regions: list[str] = []
+    provinces: list[str] = []
+    for sede in sedi:
+        if sede in ITALIAN_REGIONS:
+            regions.append(sede)
+        else:
+            provinces.append(sede)
+    return regions, provinces
+
+# ---------------------------------------------------------------------------
 # Settore classification
 # ---------------------------------------------------------------------------
 
@@ -273,9 +302,7 @@ def clean_figura_ricercata(text: str | None, max_length: int = 100) -> str | Non
 def normalize_exam(raw_exam: dict[str, Any]) -> NormalizedExam:
     enti = raw_exam.get("entiRiferimento")
     municipality = enti[0] if enti and len(enti) > 0 else None
-    sedi = raw_exam.get("sedi")
-    region = sedi[0] if sedi and len(sedi) > 0 else None
-    province = sedi[1] if sedi and len(sedi) > 1 else None
+    regions, provinces = parse_sedi(raw_exam.get("sedi"))
     figura_ricercata = clean_figura_ricercata(raw_exam.get("figuraRicercata"))
     settori: list[str] | None = raw_exam.get("settori") or None
     num_posti = raw_exam.get("numPosti")
@@ -290,8 +317,8 @@ def normalize_exam(raw_exam: dict[str, Any]) -> NormalizedExam:
         titolo=str(raw_exam.get("titolo") or ""),
         descrizione=clean_html_to_text(raw_exam.get("descrizione")),
         municipality=municipality,
-        region=region,
-        province=province,
+        regions=regions,
+        provinces=provinces,
         figura_ricercata=figura_ricercata,
         settore=classify_settore(figura_ricercata, settori),
         num_posti=num_posti,

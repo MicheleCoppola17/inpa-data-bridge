@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, or_, select
+from sqlalchemy import cast, func, or_, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_session
@@ -19,6 +20,8 @@ async def list_exams(
     updated_after: datetime | None = None,
     q: str | None = None,
     sector: str | None = Query(None, alias="sector"),
+    region: str | None = None,
+    province: str | None = None,
     sort: str = Query("-published_at"),
     session: AsyncSession = Depends(get_session),
 ) -> ExamPublicListResponse:
@@ -29,6 +32,10 @@ async def list_exams(
         filters.append(Exam.updated_at >= updated_after)
     if sector:
         filters.append(Exam.settore == sector)
+    if region:
+        filters.append(Exam.regions.op("@>")(cast([region], JSONB)))
+    if province:
+        filters.append(Exam.provinces.op("@>")(cast([province], JSONB)))
     if q:
         search = f"%{q}%"
         filters.append(or_(Exam.short_title.ilike(search), Exam.descrizione.ilike(search)))
