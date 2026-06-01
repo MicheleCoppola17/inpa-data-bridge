@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from urllib.parse import urlencode, parse_qs, urlparse, urlunparse
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -22,8 +23,31 @@ def init_engine() -> None:
         return
 
     settings = get_settings()
+    db_url = settings.database_url
+    connect_args = {}
+
+    if "?" in db_url:
+        parsed = urlparse(db_url)
+        query = parse_qs(parsed.query)
+        if "sslmode" in query:
+            sslmode = query.pop("sslmode")[0]
+            # asyncpg accepts ssl='require', etc.
+            connect_args["ssl"] = sslmode
+            
+            # Rebuild URL without sslmode query parameter
+            new_query = urlencode(query, doseq=True)
+            db_url = urlunparse((
+                parsed.scheme,
+                parsed.netloc,
+                parsed.path,
+                parsed.params,
+                new_query,
+                parsed.fragment
+            ))
+
     _engine = create_async_engine(
-        settings.database_url,
+        db_url,
+        connect_args=connect_args,
         pool_pre_ping=True,
     )
     _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
