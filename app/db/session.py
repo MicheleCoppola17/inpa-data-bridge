@@ -70,10 +70,16 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 async def db_ping() -> bool:
     try:
         async with session_scope() as session:
             await session.execute(text("SELECT 1"))
         return True
-    except SQLAlchemyError:
+    except Exception as e:
+        logger.error(f"Database ping failed: {e}", exc_info=True)
         return False
