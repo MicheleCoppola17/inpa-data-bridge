@@ -24,7 +24,16 @@ def init_engine() -> None:
 
     settings = get_settings()
     db_url = settings.database_url
-    connect_args = {}
+    
+    # Normalize scheme to postgresql+asyncpg://
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
+        db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    connect_args = {
+        "statement_cache_size": 0,
+    }
 
     if "?" in db_url:
         parsed = urlparse(db_url)
