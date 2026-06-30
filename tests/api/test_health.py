@@ -40,3 +40,22 @@ def test_health_check_db_down(monkeypatch):
     payload = response.json()
     assert payload["status"] == "degraded"
     assert payload["db"] == "down"
+
+
+def test_health_check_head(monkeypatch):
+    monkeypatch.setenv("SYNC_ENABLED", "false")
+    get_settings.cache_clear()
+    app = create_app()
+
+    async def mock_db_ping() -> bool:
+        return True
+
+    monkeypatch.setattr("app.api.v1.endpoints.health.db_ping", mock_db_ping)
+
+    with TestClient(app) as client:
+        response = client.head("/api/v1/health")
+
+    assert response.status_code == 200
+    # HEAD responses should have no body content
+    assert response.text == ""
+
